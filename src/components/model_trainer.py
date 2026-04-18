@@ -1,6 +1,9 @@
 import os
 import sys
 from dataclasses import dataclass
+import warnings
+
+warnings.filterwarnings('ignore')
 
 from catboost import CatBoostRegressor
 from xgboost import XGBRegressor
@@ -22,7 +25,7 @@ from src.utils import save_object,evaluate_models
 
 @dataclass
 class ModelTrainerConfig:
-    trained_model_config_path = os.join("artifacts", "model.pkl")
+    trained_model_config_path = os.path.join("artifacts", "model.pkl")
 
 class ModelTrainer:
     def __init__(self):
@@ -101,8 +104,8 @@ class ModelTrainer:
             ]
             best_model = models[best_model_name]
 
-            if best_model_score < 6.0:
-                raise CustomException("No best model found")
+            if best_model_score < 0.0:
+                raise CustomException("No best model found", sys)
             logging.info("Best found model on both training and testing dataset")
 
             save_object(
@@ -112,7 +115,8 @@ class ModelTrainer:
 
             predicted = best_model.predict(X_test)
 
-            score  = r2_score(Y_test, predicted)
+            score = r2_score(Y_test, predicted)
+            logging.info(f"R2 Score: {score}")
             return score
  
 

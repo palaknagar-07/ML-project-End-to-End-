@@ -42,8 +42,7 @@ class DataTransformation:
             cat_pipeline = Pipeline(
                 steps=[
                     ('imputer', SimpleImputer(strategy="most_frequent")),
-                    ('one_hot_encoder', OneHotEncoder()),
-                    ('scaler', StandardScaler(with_mean=False))
+                    ('one_hot_encoder', OneHotEncoder(sparse_output=False, handle_unknown='ignore', drop='first'))
                 ]
             )
 
@@ -67,6 +66,11 @@ class DataTransformation:
                 train_df = pd.read_csv(train_path)
                 test_df = pd.read_csv(test_path)
 
+                # Drop index column if present
+                if 'Unnamed: 0' in train_df.columns:
+                    train_df = train_df.drop(columns=['Unnamed: 0'])
+                    test_df = test_df.drop(columns=['Unnamed: 0'])
+
                 logging.info("Read Train and test data")
                 logging.info("Obtaining preprocessing object")
 
@@ -88,6 +92,10 @@ class DataTransformation:
 
                 input_train_arr = preprocessing_obj.fit_transform(input_train_df)
                 input_test_arr = preprocessing_obj.transform(input_test_df)
+                
+                # Replace any NaN values that may result from transformation
+                input_train_arr = np.nan_to_num(input_train_arr, nan=0.0, posinf=0.0, neginf=0.0)
+                input_test_arr = np.nan_to_num(input_test_arr, nan=0.0, posinf=0.0, neginf=0.0)
 
                 train_arr = np.c_[input_train_arr, np.array(target_train_df)]
 
